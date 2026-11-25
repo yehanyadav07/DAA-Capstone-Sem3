@@ -1,0 +1,146 @@
+
+#################################################################
+  MINI-COURIER PLANNER — PHASE 4: PERFORMANCE ANALYSIS
+  Random seed: 42 | Repetitions per experiment: 5
+#################################################################
+
+=================================================================
+  SORTING ALGORITHM RUNTIME COMPARISON
+=================================================================
+  Algorithm                   n=10           n=100          n=1000
+  ------------------------------------------------------------------
+  Merge Sort             0.0226 ms       0.2451 ms       2.2300 ms
+  Quick Sort             0.0129 ms       0.0942 ms       1.2980 ms
+  Insertion Sort         0.0042 ms       0.1686 ms      13.9649 ms
+  Built-in Sort          0.0016 ms       0.0054 ms       0.1082 ms
+
+=================================================================
+  KNAPSACK DP RUNTIME SCALING
+=================================================================
+  Items (n)       Capacity        Avg Time
+  ------------------------------------------
+  10                    39       0.0494 ms
+  50                   237       1.7129 ms
+  100                  482       8.6987 ms
+  200                 1024      33.8665 ms
+
+=================================================================
+  DIJKSTRA RUNTIME SCALING (randomly generated graphs)
+=================================================================
+  Nodes (V)      Edges (≈)        Avg Time
+  ------------------------------------------
+  10                    23       0.0152 ms
+  50                   123       0.0508 ms
+  200                  498       0.2604 ms
+
+=================================================================
+  ASCII RUNTIME BAR CHART  (sorting algorithms)
+=================================================================
+
+  Dataset size n=10:
+  Algorithm         | Bar (relative)                           | Time
+  -----------------------------------------------------------------------------
+  Merge Sort        | ######################################## | 0.0226 ms
+  Quick Sort        | #######################                  | 0.0129 ms
+  Insertion Sort    | #######                                  | 0.0042 ms
+  Built-in Sort     | ###                                      | 0.0016 ms
+
+  Dataset size n=100:
+  Algorithm         | Bar (relative)                           | Time
+  -----------------------------------------------------------------------------
+  Merge Sort        | ######################################## | 0.2451 ms
+  Quick Sort        | ###############                          | 0.0942 ms
+  Insertion Sort    | ############################             | 0.1686 ms
+  Built-in Sort     | #                                        | 0.0054 ms
+
+  Dataset size n=1000:
+  Algorithm         | Bar (relative)                           | Time
+  -----------------------------------------------------------------------------
+  Merge Sort        | ######                                   | 2.2300 ms
+  Quick Sort        | ####                                     | 1.2980 ms
+  Insertion Sort    | ######################################## | 13.9649 ms
+  Built-in Sort     | #                                        | 0.1082 ms
+
+=================================================================
+  ANALYSIS, BIG-O COMPLEXITIES & OPTIMIZATION SUGGESTIONS
+=================================================================
+
+╔══════════════════════════════════════════════════════════════════╗
+║           ALGORITHM ANALYSIS & OPTIMIZATION NOTES               ║
+╚══════════════════════════════════════════════════════════════════╝
+
+─── SORTING ALGORITHMS ─────────────────────────────────────────────
+
+│ Algorithm     │ Time (avg) │ Time (worst) │ Space  │ Stable? │
+│ Merge Sort    │ O(n log n) │ O(n log n)   │ O(n)   │ Yes     │
+│ Quick Sort    │ O(n log n) │ O(n²)        │ O(logn)│ No      │
+│ Insertion Sort│ O(n²)      │ O(n²)        │ O(1)   │ Yes     │
+│ Timsort(built)│ O(n log n) │ O(n log n)   │ O(n)   │ Yes     │
+
+Observations:
+  • Insertion Sort is fastest for tiny arrays (n=10) due to negligible overhead;
+    its O(n²) becomes a severe bottleneck at n=1000.
+  • Quick Sort with median-of-three beats naive Quick Sort and often beats Merge
+    Sort in practice because of better cache locality (in-place).
+  • Merge Sort guarantees O(n log n) even on adversarial inputs, making it
+    preferable when worst-case guarantees matter.
+  • Python's built-in sort (Timsort) is fastest overall because it's implemented
+    in C and exploits natural runs in the data; it should be the default choice.
+
+Suggested improvements:
+  • Hybrid approach: use Insertion Sort for sub-arrays of size ≤ 16 inside
+    Merge/Quick Sort (this is what Timsort does internally).
+  • Intro Sort (std::sort in C++): Quick Sort → Heap Sort fallback when
+    recursion depth exceeds 2·log₂(n) to guarantee O(n log n) worst-case.
+
+─── KNAPSACK (0/1 DP) ──────────────────────────────────────────────
+
+  Time Complexity:  O(n × W)   — pseudo-polynomial (W = capacity)
+  Space Complexity: O(n × W)   — full DP table
+
+Observations:
+  • Runtime grows with both n and W.  For large capacities (e.g. W=10000)
+    even n=50 can be slow.
+  • Memory can be halved to O(W) by keeping only the previous DP row
+    (space-optimised 1-D DP).
+
+Suggested improvements:
+  • Space optimisation: use a single 1-D array iterated in reverse.
+  • For fractional items, use a greedy (sort by value/weight ratio) approach
+    which is O(n log n) — far faster.
+  • Branch-and-bound or meet-in-the-middle for exact solutions on larger n
+    when W is huge.
+
+─── DIJKSTRA'S ALGORITHM ───────────────────────────────────────────
+
+  Time Complexity:  O((V + E) log V)  with binary heap (heapq)
+  Space Complexity: O(V)
+
+Observations:
+  • The heap-based implementation scales well up to hundreds/thousands of nodes.
+  • For dense graphs (E ~ V²), a Fibonacci heap reduces the time to O(E + V log V),
+    but the constant factor is large; in practice the binary-heap version wins.
+  • For unweighted graphs, BFS is O(V + E) — strictly faster.
+
+Suggested improvements:
+  • Bidirectional Dijkstra: run from both source and target simultaneously;
+    terminates as soon as the frontiers meet — roughly halves the search space.
+  • A* with an admissible heuristic (e.g. Euclidean distance for spatial graphs)
+    can dramatically reduce explored nodes.
+  • For TSP specifically, replace the naive O(n²) nearest-neighbor scan with a
+    priority queue (heap) keyed on current shortest distance — reduces inner
+    loop from O(n) to O(log n) per step.
+
+─── OVERALL TAKEAWAYS ──────────────────────────────────────────────
+
+  1. Always profile before optimising — Timsort is hard to beat in Python.
+  2. Choose the right data structure: a heap makes Dijkstra and TSP faster.
+  3. Space-time trade-offs matter: DP can be memory-heavy for large inputs.
+  4. Algorithmic improvements (better Big-O) beat micro-optimisations for
+     large n; for small n, constant factors dominate.
+  5. Memoization / caching (functools.lru_cache) can convert exponential
+     recursive algorithms to polynomial with zero change to logic.
+
+
+[Phase 4 complete]
+

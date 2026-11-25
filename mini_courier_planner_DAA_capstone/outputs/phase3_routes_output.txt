@@ -1,0 +1,103 @@
+
+############################################################
+  MINI-COURIER PLANNER — PHASE 3: GRAPH ROUTING
+############################################################
+[INFO] Loaded graph from /home/tushar/Downloads/mini_courier_planner/data/delivery_graph.json  (16 edges)
+
+============================================================
+  ADJACENCY LIST REPRESENTATION
+============================================================
+  A            → B(w=3.8), D(w=6.1), E(w=9.4), Warehouse(w=4.2)
+  B            → A(w=3.8), C(w=5.2), D(w=4.7), F(w=8.3), Warehouse(w=7.5)
+  C            → B(w=5.2), F(w=7.1), G(w=6.8), Warehouse(w=11.0)
+  D            → A(w=6.1), B(w=4.7), E(w=3.3), F(w=5.9)
+  E            → A(w=9.4), D(w=3.3), F(w=6.6), G(w=4.5)
+  F            → B(w=8.3), C(w=7.1), D(w=5.9), E(w=6.6), G(w=3.0)
+  G            → C(w=6.8), E(w=4.5), F(w=3.0)
+  Warehouse    → A(w=4.2), B(w=7.5), C(w=11.0)
+============================================================
+
+============================================================
+  DIJKSTRA'S ALGORITHM  (source = 'Warehouse')
+============================================================
+
+--- Step-by-step execution ---
+
+  Step 1: Visit 'Warehouse'  (dist=0)
+  Distances: A=∞ | B=∞ | C=∞ | D=∞ | E=∞ | F=∞ | G=∞ | Warehouse=0
+
+  Step 2: Visit 'A'  (dist=4.2)
+  Distances: A=4.2 | B=7.5 | C=11.0 | D=∞ | E=∞ | F=∞ | G=∞ | Warehouse=0
+
+  Step 3: Visit 'B'  (dist=7.5)
+  Distances: A=4.2 | B=7.5 | C=11.0 | D=10.3 | E=13.600000000000001 | F=∞ | G=∞ | Warehouse=0
+
+  Step 4: Visit 'D'  (dist=10.3)
+  Distances: A=4.2 | B=7.5 | C=11.0 | D=10.3 | E=13.600000000000001 | F=15.8 | G=∞ | Warehouse=0
+
+  Step 5: Visit 'C'  (dist=11.0)
+  Distances: A=4.2 | B=7.5 | C=11.0 | D=10.3 | E=13.600000000000001 | F=15.8 | G=∞ | Warehouse=0
+
+  Step 6: Visit 'E'  (dist=13.600000000000001)
+  Distances: A=4.2 | B=7.5 | C=11.0 | D=10.3 | E=13.600000000000001 | F=15.8 | G=17.8 | Warehouse=0
+
+  Step 7: Visit 'F'  (dist=15.8)
+  Distances: A=4.2 | B=7.5 | C=11.0 | D=10.3 | E=13.600000000000001 | F=15.8 | G=17.8 | Warehouse=0
+
+  Step 8: Visit 'G'  (dist=17.8)
+  Distances: A=4.2 | B=7.5 | C=11.0 | D=10.3 | E=13.600000000000001 | F=15.8 | G=17.8 | Warehouse=0
+
+--- Final shortest distances & paths ---
+  Destination    Distance   Path
+  -------------------------------------------------------
+  A                   4.2   Warehouse → A
+  B                   7.5   Warehouse → B
+  C                  11.0   Warehouse → C
+  D                  10.3   Warehouse → A → D
+  E              13.600000000000001   Warehouse → A → E
+  F                  15.8   Warehouse → B → F
+  G                  17.8   Warehouse → C → G
+
+--- Specific pair shortest paths ---
+  A → G: distance=13.899999999999999,  path=A → D → E → G
+  B → F: distance=8.3,  path=B → F
+  C → G: distance=6.8,  path=C → G
+
+============================================================
+  NEAREST-NEIGHBOR TSP APPROXIMATION
+============================================================
+  Stops to visit: ['Warehouse', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
+
+  Computed Route:  Warehouse → A → B → D → E → G → F → C → Warehouse
+  Total Distance:  41.6
+
+  Leg breakdown:
+    Leg 1: Warehouse    → A             dist=4.2
+    Leg 2: A            → B             dist=3.8
+    Leg 3: B            → D             dist=4.7
+    Leg 4: D            → E             dist=3.3
+    Leg 5: E            → G             dist=4.5
+    Leg 6: G            → F             dist=3.0
+    Leg 7: F            → C             dist=7.1
+    Leg 8: C            → Warehouse     dist=11.0
+
+============================================================
+  DELIVERY ROUTE PLAN — FORMATTED SUMMARY
+============================================================
+  Stop  Location         Leg Dist  Running Total
+  -------------------------------------------------------
+     1  Warehouse               0              0  ← DEPOT START
+     2  A                     4.2            4.2  
+     3  B                     3.8            8.0  
+     4  D                     4.7           12.7  
+     5  E                     3.3           16.0  
+     6  G                     4.5           20.5  
+     7  F                     3.0           23.5  
+     8  C                     7.1           30.6  
+     9  Warehouse            11.0           41.6  ← RETURN TO DEPOT
+  -------------------------------------------------------
+        TOTAL.........                      41.6
+============================================================
+
+[Phase 3 complete]
+

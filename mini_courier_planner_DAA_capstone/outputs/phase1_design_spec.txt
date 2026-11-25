@@ -1,0 +1,124 @@
+========================================================================
+        MINI-COURIER PLANNER  —  PHASE 1: DESIGN OVERVIEW
+========================================================================
+
+========================================================================
+  1. PROBLEM STATEMENT
+========================================================================
+
+  A courier company wants a data-driven system to:
+    (a) Rank parcels by urgency and value                (Sorting)
+    (b) Pack the van within weight/volume limits         (0/1 Knapsack DP)
+    (c) Find the shortest inter-stop distance            (Dijkstra)
+    (d) Build a complete delivery tour                   (Nearest-Neighbour TSP)
+
+  All four modules connect as a sequential pipeline — output from each
+  stage feeds the next.
+
+========================================================================
+  2. PARCEL DATASET  (parcels.csv)
+========================================================================
+
+  Loaded 15 parcels:
+
+ID       Weight   Volume  Priority  Deadline   Value
+----------------------------------------------------
+P001       2.5kg     5.0L         1        2d      90
+P002       8.0kg    20.0L         3        5d      55
+P003       0.5kg     1.0L         2        1d      80
+P004      15.0kg    35.0L         5        7d      20
+P005       4.5kg    10.0L         1        3d      95
+P006       1.2kg     3.0L         2        2d      75
+P007       6.0kg    15.0L         4        6d      40
+P008       3.8kg     8.0L         1        1d      98
+P009      12.0kg    30.0L         5        7d      15
+P010       0.8kg     2.0L         2        3d      70
+P011       5.5kg    12.0L         3        4d      60
+P012       9.0kg    25.0L         4        6d      35
+P013       2.0kg     4.0L         1        2d      88
+P014       7.5kg    18.0L         3        5d      50
+P015       1.5kg     6.0L         2        3d      72
+
+  Attribute notes:
+    weight_kg     → Van max: 50 kg   (physical constraint)
+    volume_litre  → Van max: 100 L   (physical constraint)
+    priority      → 1 = most urgent; drives Insertion Sort ordering
+    deadline_days → Days until cutoff; primary key for Merge Sort
+    value_score   → Business value; value/weight ratio drives Quick Sort
+
+========================================================================
+  3. DELIVERY GRAPH  (delivery_graph.json)
+========================================================================
+
+  Nodes (8): Warehouse, A, B, C, D, E, F, G
+  Edges (16): undirected, weighted in km
+
+  Adjacency List:
+  A            → B (3.8 km)  |  Warehouse (4.2 km)  |  D (6.1 km)  |  E (9.4 km)
+  B            → A (3.8 km)  |  D (4.7 km)  |  C (5.2 km)  |  Warehouse (7.5 km)  |  F (8.3 km)
+  C            → B (5.2 km)  |  G (6.8 km)  |  F (7.1 km)  |  Warehouse (11.0 km)
+  D            → E (3.3 km)  |  B (4.7 km)  |  F (5.9 km)  |  A (6.1 km)
+  E            → D (3.3 km)  |  G (4.5 km)  |  F (6.6 km)  |  A (9.4 km)
+  F            → G (3.0 km)  |  D (5.9 km)  |  E (6.6 km)  |  C (7.1 km)  |  B (8.3 km)
+  G            → F (3.0 km)  |  E (4.5 km)  |  C (6.8 km)
+  Warehouse    → A (4.2 km)  |  B (7.5 km)  |  C (11.0 km)
+
+  Graph format:
+    JSON schema  → {"nodes": [...], "edges": [[u, v, km], ...]}
+    Runtime repr → Python dict: node → list of (neighbour, distance) tuples
+    Undirected   → each edge stored in both directions for O(degree) lookup
+
+========================================================================
+  4. ALGORITHM SELECTION MAP
+========================================================================
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Phase  │  Algorithm              │  Purpose                        │
+  ├─────────┼─────────────────────────┼─────────────────────────────────┤
+  │  2      │  Merge Sort             │  Sort by deadline (asc) then    │
+  │         │                         │  priority (asc)                 │
+  ├─────────┼─────────────────────────┼─────────────────────────────────┤
+  │  2      │  Quick Sort             │  Sort by value/weight ratio     │
+  │         │                         │  (desc) — highest value density │
+  ├─────────┼─────────────────────────┼─────────────────────────────────┤
+  │  2      │  Insertion Sort         │  Sort by priority (asc) —       │
+  │         │                         │  simplest, good for small n     │
+  ├─────────┼─────────────────────────┼─────────────────────────────────┤
+  │  2      │  0/1 Knapsack DP        │  Select parcels maximising      │
+  │         │  (dual-constraint)      │  value_score within 50 kg/100 L │
+  ├─────────┼─────────────────────────┼─────────────────────────────────┤
+  │  3      │  Dijkstra's Algorithm   │  Minimum distance between any   │
+  │         │                         │  two stops in the graph         │
+  ├─────────┼─────────────────────────┼─────────────────────────────────┤
+  │  3      │  Nearest-Neighbour TSP  │  Greedy tour visiting all       │
+  │         │                         │  selected stops once            │
+  └─────────┴─────────────────────────┴─────────────────────────────────┘
+
+========================================================================
+  5. INTEGRATION PIPELINE
+========================================================================
+
+  Step 1 — SORTING (Phase 2)
+    Input  : All 15 parcels from parcels.csv
+    Process: Apply Merge Sort (deadline/priority), Quick Sort (value density),
+             Insertion Sort (priority) to produce ranked lists.
+    Output : Ordered parcel lists showing delivery preference.
+
+  Step 2 — KNAPSACK (Phase 2)
+    Input  : Ranked parcel list + van capacity (50 kg, 100 L)
+    Process: 0/1 DP over weight × volume dimensions.
+    Output : Selected subset — highest feasible value_score load.
+
+  Step 3 — SHORTEST PATHS (Phase 3)
+    Input  : delivery_graph.json + selected delivery stops
+    Process: Dijkstra from Warehouse to each stop.
+    Output : Distance matrix / shortest-path dictionary.
+
+  Step 4 — TSP ROUTE (Phase 3)
+    Input  : Distance matrix from Step 3
+    Process: Nearest-Neighbour heuristic starting at Warehouse.
+    Output : Ordered tour → Warehouse → … → Warehouse
+
+========================================================================
+  Phase 1 design complete. Proceed to phase2_sorting_knapsack.py
+========================================================================

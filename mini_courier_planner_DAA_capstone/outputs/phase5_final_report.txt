@@ -1,0 +1,212 @@
+
+[94m[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[94m[1m  1.  PROJECT OVERVIEW[0m
+[94m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+  Project  : Mini-Courier Planner
+  Course   : Design & Analysis of Algorithms (ETCCDA302)
+  Faculty  : Dr. Shweta Agarwal
+  Uni      : K.R. Mangalam University, Gurugram, Haryana
+
+  PROBLEM STATEMENT
+  ─────────────────
+  Given a list of parcels (each with weight, volume, priority, deadline, and
+  value score) and a road network of delivery points, build a prototype that:
+
+    ① Sorts and prioritises parcels (Sorting Algorithms)
+    ② Selects the optimal subset to load in a single trip (0/1 Knapsack DP)
+    ③ Finds the shortest path between any two locations (Dijkstra's Algorithm)
+    ④ Computes an efficient full-delivery route (Nearest-Neighbor TSP)
+    ⑤ Analyses and compares the runtime performance of all components
+
+  INTEGRATION FLOW
+  ────────────────
+  parcels.csv ──► Merge Sort ──► Prioritised List
+                                      │
+                                      ▼
+                             0/1 Knapsack DP ──► Selected Parcels (trip load)
+                                      │
+  delivery_graph.json ─────────────► │
+          │                           ▼
+          ├──► Dijkstra ──────► Shortest-Path Matrix
+          │                           │
+          └───────────────────► NN-TSP ──► Optimised Delivery Route
+
+
+[92m[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[92m[1m  2.  PHASE 2  –  PARCEL SORTING (Merge Sort by Deadline × Priority)[0m
+[92m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+  ID         Weight   Volume   Priority   Deadline    Value
+────────────────────────────────────────────────────────────────────────────
+  P008         3.8        8          1          1       98
+  P003         0.5        1          2          1       80
+  P001         2.5        5          1          2       90
+  P013         2.0        4          1          2       88
+  P006         1.2        3          2          2       75
+  P005         4.5       10          1          3       95
+  P010         0.8        2          2          3       70
+  P015         1.5        6          2          3       72
+  P011         5.5       12          3          4       60
+  P002         8.0       20          3          5       55
+  P014         7.5       18          3          5       50
+  P007         6.0       15          4          6       40
+  P012         9.0       25          4          6       35
+  P004        15.0       35          5          7       20
+  P009        12.0       30          5          7       15
+
+  [93m► Sorted by deadline (asc) then priority (asc).[0m
+  [93m► Algorithm: Merge Sort  |  Time: O(n log n)  |  Space: O(n)[0m
+
+[92m[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[92m[1m  3.  PHASE 2  –  0/1 KNAPSACK (Van Capacity: 50 kg / 100 L)[0m
+[92m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+  Van constraints  →  Max weight: 50.0 kg  |  Max volume: 100.0 L
+
+  SELECTED PARCELS  (2 items)
+────────────────────────────────────────────────────────────────────────────
+  ID         Weight   Volume    Value
+────────────────────────────────────────────────────────────────────────────
+  P014         7.5       18       50
+  P002         8.0       20       55
+────────────────────────────────────────────────────────────────────────────
+  TOTAL       15.5       38      833
+
+  Parcels NOT loaded : P001, P003, P004, P005, P006, P007, P008, P009, P010, P011, P012, P013, P015
+
+  [93m► Algorithm: 0/1 Knapsack DP  |  Time: O(n·W·V)  |  Space: O(W·V)[0m
+
+[96m[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[96m[1m  4.  PHASE 3  –  DIJKSTRA + NEAREST-NEIGHBOR TSP[0m
+[96m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+  SHORTEST PATHS FROM WAREHOUSE
+────────────────────────────────────────────────────────────────────────────
+  Destination       Distance  Path
+────────────────────────────────────────────────────────────────────────────
+  A                     4.2 km  Warehouse → A
+  B                     7.5 km  Warehouse → B
+  C                    11.0 km  Warehouse → C
+  D                    10.3 km  Warehouse → A → D
+  E               13.600000000000001 km  Warehouse → A → E
+  F                    15.8 km  Warehouse → B → F
+  G                    17.8 km  Warehouse → C → G
+
+  DELIVERY ROUTE  (Nearest-Neighbor TSP)
+────────────────────────────────────────────────────────────────────────────
+
+  Stop   Location          Leg Distance   Running Total
+────────────────────────────────────────────────────────────────────────────
+  0      Warehouse                    —              0 km
+  1      A                         4.2 km            4.2 km
+  2      B                         3.8 km            8.0 km
+  3      D                         4.7 km           12.7 km
+  4      E                         3.3 km           16.0 km
+  5      G                         4.5 km           20.5 km
+  6      F                         3.0 km           23.5 km
+  7      C                         7.1 km           30.6 km
+  8      Warehouse                11.0 km           41.6 km
+────────────────────────────────────────────────────────────────────────────
+  Total route distance: [1m42 km[0m
+
+  [93m► Dijkstra: O((V+E) log V)  |  TSP NN: O(V²)  –  approximation ratio ≤ 2×OPT[0m
+
+[93m[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[93m[1m  5.  PHASE 4  –  ALGORITHM COMPLEXITY SUMMARY[0m
+[93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+────────────────────────────────────────────────────────────────────────────
+  Algorithm                    Time         Space     Notes
+────────────────────────────────────────────────────────────────────────────
+  Insertion Sort              O(n²)          O(1)     Simple; best for tiny/nearly-sorted lists
+  Merge Sort                O(n log n)       O(n)     Stable; best general-purpose choice
+  Quick Sort               O(n log n)*     O(log n)   Fast avg; worst-case O(n²) with bad pivot
+  0/1 Knapsack DP            O(n·W·V)       O(W·V)    Pseudo-polynomial; exact optimum
+  Dijkstra (heap)          O((V+E)logV)      O(V)     Optimal for single-source shortest path
+  NN-TSP                      O(V²)          O(V)     Greedy approx; not globally optimal
+────────────────────────────────────────────────────────────────────────────
+
+  OPTIMIZATION SUGGESTIONS
+  ─────────────────────────
+  • Replace NN-TSP with 2-opt local-search post-processing to reduce total
+    route length by ~10-15 % on average.
+  • For knapsack with large capacities, use a branch-and-bound approach or
+    FPTAS (Fully Polynomial-Time Approximation Scheme).
+  • Cache Dijkstra results (all-pairs) once at startup to avoid recomputing
+    for every TSP iteration.
+  • Use a Fibonacci heap for Dijkstra to achieve O(E + V log V).
+  • For real-time courier systems, switch to A* search with geographic
+    heuristics (straight-line distance) for faster pathfinding.
+
+
+[95m[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[95m[1m  6.  DESIGN DECISIONS & REFLECTIONS[0m
+[95m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+  DATA DESIGN
+  ───────────
+  • Parcels are stored as CSV (human-readable, easy to edit).
+  • The road network is stored as JSON (flexible, supports weighted graphs).
+  • The dual-constraint knapsack (weight + volume) models real van loading.
+
+  ALGORITHM SELECTION RATIONALE
+  ──────────────────────────────
+  • Merge Sort was chosen for primary sorting – stable O(n log n) with
+    predictable performance; important for deadline-critical ordering.
+  • 0/1 Knapsack DP gives the EXACT optimal loading – greedy would miss
+    combinations where low-weight, high-value parcels are excluded early.
+  • Dijkstra with a min-heap is the gold standard for sparse non-negative
+    weighted graphs like road networks.
+  • Nearest-Neighbor TSP is O(V²) and simple to implement; it gives a
+    good-enough route quickly – crucial for real-time courier apps.
+
+  INTEGRATION STRATEGY
+  ─────────────────────
+  Each phase feeds into the next:
+    Sort → select the best subset → route those stops optimally.
+  This pipeline can be re-run every morning with fresh parcel data.
+
+  LIMITATIONS
+  ────────────
+  • TSP NN is not optimal; a full branch-and-bound or dynamic-programming
+    TSP would be O(2^n · n²) – feasible only up to ~20 stops.
+  • The knapsack DP scales poorly with very large capacities; approximate
+    methods are needed for industrial-scale problems.
+
+
+[92m[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[92m[1m  7.  EXECUTION EVIDENCE[0m
+[92m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+  To reproduce all outputs:
+
+    # Run all phases
+    python main.py
+
+    # Run a single phase
+    python main.py --phase 2
+
+  Expected output files after running all phases:
+    outputs/phase2_sorted_parcels.txt
+    outputs/phase2_knapsack_result.txt
+    outputs/phase3_routes.txt
+    outputs/phase4_runtime_table.txt
+
+  All source code is available in the project folder with inline comments
+  explaining every algorithmic step.
+
+
+[96m[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[96m[1m  CAPSTONE SUBMISSION CHECKLIST[0m
+[96m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+  [92m✔[0m  [1mPhase 1   [0m  Design document & algorithm selection
+  [92m✔[0m  [1mPhase 2   [0m  Sorting (Merge/Quick/Insertion) + Knapsack DP
+  [92m✔[0m  [1mPhase 3   [0m  Dijkstra shortest paths + NN-TSP route
+  [92m✔[0m  [1mPhase 4   [0m  Runtime benchmarks + ASCII chart + analysis
+  [92m✔[0m  [1mPhase 5   [0m  Final report + demonstration
+  [92m✔[0m  [1mCode      [0m  Well-commented Python files
+  [92m✔[0m  [1mData      [0m  parcels.csv + delivery_graph.json
+  [92m✔[0m  [1mREADME    [0m  Setup and execution instructions
+
+  [92m[1mAll phases complete. Project ready for submission.[0m
+
